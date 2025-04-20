@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Effective Gain Calculator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            backgroundDark: "#0f172a",
+            backgroundLight: "#f4f4f5",
+          },
+          animation: {
+            twinkle: "twinkle 5s infinite",
+          },
+          keyframes: {
+            twinkle: {
+              "0%, 100%": { opacity: 0.2 },
+              "50%": { opacity: 0.6 },
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      transition: background 0.4s, color 0.4s;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: radial-gradient(circle at 20% 20%, #0f172a, #000);
+      z-index: -2;
+      transition: opacity 0.4s;
+    }
+
+    .light body::before {
+      background: radial-gradient(circle at 20% 20%, #fff, #d1d5db);
+    }
+
+    .stars {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    .star {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: white;
+      border-radius: 50%;
+      opacity: 0.3;
+      animation: twinkle 5s infinite ease-in-out;
+    }
+
+    .glass {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+      transition: background 0.3s;
+    }
+
+    .light .glass {
+      background: rgba(0, 0, 0, 0.05);
+      border-color: rgba(0, 0, 0, 0.1);
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.05);
+    }
+
+    .toggle-btn {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+    }
+  </style>
+</head>
+<body class="flex flex-col items-center justify-center px-4 min-h-screen relative">
+
+  <div class="stars" id="starfield"></div>
+
+  <button id="toggleMode" class="toggle-btn px-3 py-2 rounded-xl bg-white/10 text-sm text-white dark:text-black border border-white/20 hover:bg-white/20 dark:hover:bg-black/20 transition">
+    Toggle Theme
+  </button>
+
+  <div class="glass p-10 rounded-3xl w-full max-w-xl text-white dark:text-black transition-all duration-300 ease-in-out">
+    <h2 class="text-4xl font-semibold relative inline-block pb-2 bg-gradient-to-r from-[#00E696] to-[#00A3FF] bg-clip-text text-transparent text-center mb-8">
+      Effective Gain Calculator
+    </h2>
+
+    <div class="space-y-5">
+      <div>
+        <label class="block mb-1 text-sm font-semibold">Token Price ($)</label>
+        <input type="number" id="tokenPrice" step="0.01"
+          class="w-full px-4 py-3 rounded-xl bg-gray-900 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 input-glow dark:bg-gray-100 dark:text-black dark:border-gray-300" />
+      </div>
+
+      <div>
+        <label class="block mb-1 text-sm font-semibold">Number of Tokens</label>
+        <input type="number" id="numTokens" step="0.01"
+          class="w-full px-4 py-3 rounded-xl bg-gray-900 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 input-glow dark:bg-gray-100 dark:text-black dark:border-gray-300" />
+      </div>
+
+      <div>
+        <label class="block mb-1 text-sm font-semibold">APY Percentage (%)</label>
+        <input type="number" id="apy" step="0.01"
+          class="w-full px-4 py-3 rounded-xl bg-gray-900 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 input-glow dark:bg-gray-100 dark:text-black dark:border-gray-300" />
+      </div>
+
+      <div>
+        <label class="block mb-1 text-sm font-semibold">Time (in Days)</label>
+        <input type="number" id="timeDays"
+          class="w-full px-4 py-3 rounded-xl bg-gray-900 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 input-glow dark:bg-gray-100 dark:text-black dark:border-gray-300" />
+      </div>
+    </div>
+
+    <div class="mt-10 text-center text-base leading-relaxed bg-gray-800/40 text-white dark:text-black dark:bg-gray-100/40 p-5 rounded-2xl transition-opacity duration-300 fade-in-up" id="result">
+      Enter values to see result.
+    </div>
+  </div>
+
+  <p class="text-sm text-gray-500 mt-6">Made by: <span class="font-semibold">Freezz</span></p>
+
+  <script>
+    // Theme toggle
+    const toggle = document.getElementById("toggleMode");
+    toggle.addEventListener("click", () => {
+      document.documentElement.classList.toggle("light");
+      document.documentElement.classList.toggle("dark");
+    });
+
+    // Starfield generator
+    const starfield = document.getElementById("starfield");
+    for (let i = 0; i < 100; i++) {
+      const star = document.createElement("div");
+      star.className = "star";
+      star.style.top = Math.random() * 100 + "%";
+      star.style.left = Math.random() * 100 + "%";
+      star.style.animationDuration = (Math.random() * 5 + 2) + "s";
+      starfield.appendChild(star);
+    }
+
+    // Calculation
+    const priceInput = document.getElementById('tokenPrice');
+    const numTokensInput = document.getElementById('numTokens');
+    const apyInput = document.getElementById('apy');
+    const timeInput = document.getElementById('timeDays');
+    const resultDiv = document.getElementById('result');
+
+    function animateResult(content) {
+      resultDiv.classList.remove('fade-in-up');
+      void resultDiv.offsetWidth;
+      resultDiv.innerHTML = content;
+      resultDiv.classList.add('fade-in-up');
+    }
+
+    function calculateAPY() {
+      const price = parseFloat(priceInput.value);
+      const numTokens = parseFloat(numTokensInput.value);
+      const apy = parseFloat(apyInput.value);
+      const days = parseFloat(timeInput.value);
+
+      if (isNaN(price) || isNaN(numTokens) || isNaN(apy) || isNaN(days) ||
+        price < 0 || numTokens < 0 || apy < 0 || days < 0) {
+        animateResult('Please enter valid positive numbers in all fields.');
+        return;
+      }
+
+      const years = days / 365;
+      const initialValue = price * numTokens;
+      const finalValue = initialValue * Math.pow(1 + apy / 100, years);
+      const gain = finalValue - initialValue;
+      const effectiveGainPercent = (gain / initialValue) * 100;
+
+      const resultHTML = `
+        <div class="text-left space-y-2">
+          <p><span class="text-cyan-400 font-semibold">Initial Value:</span> $${initialValue.toLocaleString()}</p>
+          <p><span class="text-green-400 font-semibold">Final Value:</span> $${finalValue.toLocaleString()}</p>
+          <p><span class="text-yellow-300 font-semibold">Gain:</span> $${gain.toLocaleString()}</p>
+          <p><span class="text-pink-400 font-semibold">Effective Gain:</span> ${effectiveGainPercent.toFixed(2)}%</p>
+        </div>
+      `;
+      animateResult(resultHTML);
+    }
+
+    [priceInput, numTokensInput, apyInput, timeInput].forEach(input =>
+      input.addEventListener('input', calculateAPY)
+    );
+  </script>
+</body>
+</html>
